@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chouhan Decoration - Booking Management</title>
+<script type="text/javascript" src="https://me.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=53NxOkPvCmOSVbON660zP2KnI6lEXdJljHoZj2EuyY6DuN42ByKmndJN37csqb-LfQY3yBR0vjny6VFhvv6-z_fXV1lhlq3I93U4ZRLAKpGGFtSi3w2QQ8nQxKjQ9uKil8owSmwbjVSCDQmFZpBNLy2xz0JrtOEGubZiptd3cZzKiZamEG9AcW7MahtzDaZ3-g5wenvHkcyjX42tfcaAfW-DZ_dfOfNJ5gWdOUSsteC5XFmQYGRszCTxmBhVr2c4M9_KTGYyEU9Cxid5_6HxJfKfLUgIlHAddHBMKmNaYpJyBCRp7W8rcrIonrLxsUf-" charset="UTF-8"></script><style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#1f2937}
+header{background:linear-gradient(135deg,#111827,#7c3aed);color:#fff;padding:22px 5%;display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+header h1{margin:0;font-size:28px}header p{margin:5px 0 0;color:#ddd}
+.container{max-width:1200px;margin:25px auto;padding:0 18px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:22px}
+.card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 3px 15px #00000010}.card b{font-size:27px;display:block;margin-top:8px}
+.grid{display:grid;grid-template-columns:380px 1fr;gap:20px}
+.panel{background:#fff;border-radius:14px;padding:22px;box-shadow:0 3px 15px #00000010}
+h2{margin-top:0}label{font-weight:bold;font-size:14px;display:block;margin:12px 0 6px}
+input,select,textarea{width:100%;padding:11px;border:1px solid #d1d5db;border-radius:8px;font-size:15px}
+button{border:0;border-radius:8px;padding:11px 16px;font-weight:bold;cursor:pointer}
+.primary{background:#7c3aed;color:#fff}.secondary{background:#e5e7eb}.danger{background:#dc2626;color:#fff}
+.actions{display:flex;gap:8px;margin-top:15px;flex-wrap:wrap}
+.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:left;padding:12px;border-bottom:1px solid #eee;font-size:14px}th{background:#f8fafc}
+.badge{padding:5px 9px;border-radius:20px;background:#ede9fe;color:#6d28d9;font-size:12px;font-weight:bold}
+.search{margin-bottom:12px}
+.empty{text-align:center;color:#6b7280;padding:30px}
+@media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}}
+@media(max-width:500px){.cards{grid-template-columns:1fr}header h1{font-size:22px}}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>🎪 Chouhan Decoration</h1><p>Decoration • Event • Wedding Booking Management</p></div>
+  <button class="secondary" onclick="exportCSV()">⬇ Export Booking Data</button>
+</header>
+
+<div class="container">
+  <div class="cards">
+    <div class="card">Total Bookings<b id="total">0</b></div>
+    <div class="card">Upcoming<b id="upcoming">0</b></div>
+    <div class="card">This Month<b id="month">0</b></div>
+    <div class="card">Total Amount<b id="amount">₹0</b></div>
+  </div>
+
+  <div class="grid">
+    <section class="panel">
+      <h2 id="formTitle">New Booking</h2>
+      <form id="bookingForm">
+        <input type="hidden" id="editId">
+        <label>Customer Name *</label><input id="name" required placeholder="Enter customer name">
+        <label>Mobile Number *</label><input id="phone" required placeholder="10 digit mobile number">
+        <label>Booking Date *</label><input id="date" type="date" required>
+        <label>Event Type</label>
+        <select id="event"><option>Wedding</option><option>Birthday</option><option>Engagement</option><option>Reception</option><option>Corporate Event</option><option>Other</option></select>
+        <label>Venue / Address</label><input id="venue" placeholder="Event venue">
+        <label>Decoration Package</label>
+        <select id="package"><option>Basic</option><option>Premium</option><option>Royal</option><option>Custom</option></select>
+        <label>Total Amount (₹)</label><input id="price" type="number" min="0" placeholder="0">
+        <label>Advance Paid (₹)</label><input id="advance" type="number" min="0" placeholder="0">
+        <label>Notes</label><textarea id="notes" rows="3" placeholder="Extra requirements"></textarea>
+        <div class="actions"><button class="primary" type="submit">💾 Save Booking</button><button class="secondary" type="button" onclick="resetForm()">Clear</button></div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>📅 Booking List</h2>
+      <input class="search" id="search" placeholder="Search customer, mobile, venue..." oninput="render()">
+      <div class="table-wrap">
+        <table><thead><tr><th>Date</th><th>Customer</th><th>Mobile</th><th>Event</th><th>Venue</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody id="rows"></tbody></table>
+        <div id="empty" class="empty">No bookings yet. Add your first booking.</div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+const KEY='chouhan_decoration_bookings_v1';
+let bookings=JSON.parse(localStorage.getItem(KEY)||'[]');
+
+const $=id=>document.getElementById(id);
+function save(){localStorage.setItem(KEY,JSON.stringify(bookings));render();}
+function money(n){return '₹'+Number(n||0).toLocaleString('en-IN')}
+function formatDate(s){if(!s)return '-'; return new Date(s+'T00:00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}
+
+$('bookingForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ const id=$('editId').value;
+ const data={id:id||Date.now().toString(),name:$('name').value.trim(),phone:$('phone').value.trim(),date:$('date').value,event:$('event').value,venue:$('venue').value.trim(),package:$('package').value,price:Number($('price').value||0),advance:Number($('advance').value||0),notes:$('notes').value.trim()};
+ if(id){const i=bookings.findIndex(x=>x.id===id);if(i>=0)bookings[i]=data}else bookings.push(data);
+ save();resetForm();alert(id?'Booking updated!':'Booking saved successfully!');
+});
+function resetForm(){$('bookingForm').reset();$('editId').value='';$('formTitle').textContent='New Booking'}
+function editBooking(id){
+ const b=bookings.find(x=>x.id===id);if(!b)return;
+ $('editId').value=b.id;$('name').value=b.name;$('phone').value=b.phone;$('date').value=b.date;$('event').value=b.event;$('venue').value=b.venue;$('package').value=b.package;$('price').value=b.price;$('advance').value=b.advance;$('notes').value=b.notes;$('formTitle').textContent='Edit Booking';scrollTo({top:0,behavior:'smooth'});
+}
+function deleteBooking(id){if(confirm('Delete this booking?')){bookings=bookings.filter(x=>x.id!==id);save()}}
+function render(){
+ const q=$('search').value.toLowerCase();
+ const list=bookings.filter(b=>[b.name,b.phone,b.venue,b.event].join(' ').toLowerCase().includes(q)).sort((a,b)=>a.date.localeCompare(b.date));
+ $('rows').innerHTML=list.map(b=>{
+   const past=b.date < new Date().toISOString().slice(0,10);
+   const due=Math.max(0,b.price-b.advance);
+   return `<tr><td>${formatDate(b.date)}</td><td><b>${esc(b.name)}</b></td><td>${esc(b.phone)}</td><td>${esc(b.event)}</td><td>${esc(b.venue||'-')}</td><td>${money(b.price)}<br><small>Due: ${money(due)}</small></td><td><span class="badge">${past?'Completed/Past':'Upcoming'}</span></td><td><button class="secondary" onclick="editBooking('${b.id}')">Edit</button> <button class="danger" onclick="deleteBooking('${b.id}')">Delete</button></td></tr>`
+ }).join('');
+ $('empty').style.display=list.length?'none':'block';
+ const today=new Date().toISOString().slice(0,10), ym=today.slice(0,7);
+ $('total').textContent=bookings.length;
+ $('upcoming').textContent=bookings.filter(b=>b.date>=today).length;
+ $('month').textContent=bookings.filter(b=>b.date.startsWith(ym)).length;
+ $('amount').textContent=money(bookings.reduce((s,b)=>s+b.price,0));
+}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function exportCSV(){
+ if(!bookings.length){alert('No booking data to export.');return}
+ const headers=['Booking ID','Customer','Mobile','Date','Event','Venue','Package','Total Amount','Advance','Due','Notes'];
+ const lines=[headers,...bookings.map(b=>[b.id,b.name,b.phone,b.date,b.event,b.venue,b.package,b.price,b.advance,Math.max(0,b.price-b.advance),b.notes])]
+ .map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\\n');
+ const blob=new Blob([lines],{type:'text/csv;charset=utf-8;'}),a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);a.download='chouhan-decoration-bookings.csv';a.click();URL.revokeObjectURL(a.href);
+}
+render();
+</script>
+</body>
+</html>
